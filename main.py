@@ -1,5 +1,7 @@
-import PySimpleGUI as gui
+from PyQt6.QtWidgets import *
+from PyQt6.QtCore import Qt
 from PIL import Image, ImageFont, ImageDraw
+from pathlib import Path
 import exifread
 import os
 
@@ -7,10 +9,6 @@ import os
 minBoarderWidth = 0.1
 minBoarderHeight = 0.2
 
-maxTextHeight = 40
-
-sourceDirectory = ""
-targetDirectory = ""
 
 def AddedSquareBoarder(sourceLocation, color):
     sourceImage = Image.open(sourceLocation)
@@ -99,28 +97,87 @@ def AddedSquareBoarder(sourceLocation, color):
     draw.text(bottomLeftTextOffset, focalLengthString, font=cameraSettingFont, fill=(0,0,0,255), anchor="lm")
     draw.multiline_text(bottomRightTextOffset, cameraNameString+"\n"+lensNameString, font=cameraInfoFont, fill=(0,0,0,255),align="right", anchor="rm",spacing=int(textHeight*0.1))
     return resultImage
-
-
 #AddedSquareBoarder("Test/DSC_0647.jpg",(255,255,255)).show()
 #AddedSquareBoarder("Test/DSC_9871.jpg",(255,255,255)).show()
 #test images
 
-layout = [
-    [gui.Text("Enter Source Directory:")],
-    [gui.InputText(key="sourceDirectory")],
-    [gui.Text("Enter Target Directory:")],
-    [gui.InputText(key="targetDirectory")],
-    [gui.Submit("Start")]
-]
+
+#GUI Shell here
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+
+        self.setWindowTitle("Widgets App")
+        self.sourceDirectory = ""
+        self.targetDirectory = ""
+        self.backgroundColorRValue = 255
+        self.backgroundColorGValue = 255
+        self.backgroundColorBValue = 255
+
+#Browse button for directory input
+
+        directoryInputLayout = QGridLayout()
+
+        sourceDirectoryBrowseButton = QPushButton("Browse")
+        sourceDirectoryBrowseButton.clicked.connect(self.GetSourceDirectory)
+        targetDirectoryBrowseButton = QPushButton("Browse")
+        targetDirectoryBrowseButton.clicked.connect(self.GetTargetDirectory)
+        self.sourceDirectoryLabel = QLabel("From: "+self.sourceDirectory)
+        self.targetDirectoryLabel = QLabel("To: "+self.targetDirectory)
+
+        directoryInputLayout.addWidget(self.sourceDirectoryLabel,0,0)
+        directoryInputLayout.addWidget(sourceDirectoryBrowseButton,0,1)
+        directoryInputLayout.addWidget(self.targetDirectoryLabel,1,0)
+        directoryInputLayout.addWidget(targetDirectoryBrowseButton,1,1)
+
+        previewButton = QPushButton("Preview")
+        previewButton.clicked.connect(self.Preview)
+        startButton = QPushButton("Convert")
+        startButton.released.connect(self.Start)
+        inputLayout = QVBoxLayout()
+
+        inputLayout.addLayout(directoryInputLayout)
+        inputLayout.addWidget(previewButton)
+        inputLayout.addWidget(startButton)
 
 
-window = gui.Window("Square Image Generator", layout)
-event, values = window.read()
-window.close()
-sourceDirectory = values["sourceDirectory"]
-targetDirectory = values["targetDirectory"]
+        widget = QWidget()
+        widget.setLayout(inputLayout)
+
+        # Set the central widget of the Window. Widget will expand
+        # to take up all the space in the window by default.
+        self.setCentralWidget(widget)
+
+    def GetSourceDirectory(self):
+        dir = QFileDialog.getExistingDirectory(self, "Select Source Directory")
+        if dir:
+            self.sourceDirectory = str(Path(dir))
+            self.sourceDirectoryLabel.setText(str(Path(dir)))
+
+    def GetTargetDirectory(self):
+        dir = QFileDialog.getExistingDirectory(self, "Select Target Directory")
+        if dir:
+            self.targetDirectory = str(Path(dir))
+            self.targetDirectoryLabel.setText(str(Path(dir)))
+
+    def Preview(self):
+        AddedSquareBoarder(Path("Test")/Path("DSC_0647.jpg"),(self.backgroundColorRValue,self.backgroundColorGValue,self.backgroundColorBValue)).show("Sample 1")
+        AddedSquareBoarder(Path("Test")/Path("DSC_9871.jpg"),(self.backgroundColorRValue, self.backgroundColorGValue, self.backgroundColorBValue)).show("Sample 2")
+    def Start(self):
+        for image in os.listdir(self.sourceDirectory):
+            AddedSquareBoarder(str(Path(self.sourceDirectory)/Path(image)),(self.backgroundColorRValue, self.backgroundColorGValue, self.backgroundColorBValue)).save(str(Path(self.targetDirectory)/Path("framed"+image)))
+
+app = QApplication([])
+
+# Create a Qt widget, which will be our window.
+window = MainWindow()
+window.show()  # IMPORTANT!!!!! Windows are hidden by default.
+
+# Start the event loop.
+app.exec()
 
 
-for image in os.listdir(sourceDirectory):
-    AddedSquareBoarder(str(sourceDirectory)+"\\"+str(image),(255,255,255)).save(str(targetDirectory)+"\\"+str(image)+"-framed.jpg","JPEG")
-gui.popup_ok("Finished!")
+
+
+"""for image in os.listdir(sourceDirectory):
+    AddedSquareBoarder(str(sourceDirectory)+"+str(image),(255,255,255)).save(str(targetDirectory)+"\\"+str(image)+"-framed.jpg","JPEG")"""
