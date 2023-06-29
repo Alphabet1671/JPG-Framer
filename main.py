@@ -4,7 +4,6 @@ from PIL import Image, ImageFont, ImageDraw
 from pathlib import Path
 import exifread
 import os
-import sys
 
 
 minBoarderWidth = 0.1
@@ -85,8 +84,8 @@ def AddedSquareBoarder(sourceLocation, color):
     paddingWidth = int(resultWidth-sourceWidth)/2
 
 
-    cameraSettingFont = ImageFont.truetype(os.path.join(os.path.dirname(sys.argv[0]), "Fonts/calibri-italic.ttf"), int(textHeight))
-    cameraInfoFont = ImageFont.truetype(os.path.join(os.path.dirname(sys.argv[0]), "Fonts/calibri-italic.ttf"), int(textHeight))
+    cameraSettingFont = ImageFont.truetype("calibri-italic.ttf", int(textHeight))
+    cameraInfoFont = ImageFont.truetype("calibri-italic.ttf", int(textHeight))
 
 
     topLeftTextOffset = (paddingWidth,paddingHeight/2)
@@ -162,8 +161,8 @@ class MainWindow(QMainWindow):
             self.targetDirectoryLabel.setText(str(Path(dir)))
 
     def Preview(self):
-        AddedSquareBoarder(os.path.join(os.path.dirname(sys.argv[0]), str(Path("Test")/Path("DSC_0647.jpg"))),(self.backgroundColorRValue,self.backgroundColorGValue,self.backgroundColorBValue)).show("Sample 1")
-        AddedSquareBoarder(os.path.join(os.path.dirname(sys.argv[0]), str(Path("Test")/Path("DSC_9871.jpg"))),(self.backgroundColorRValue, self.backgroundColorGValue, self.backgroundColorBValue)).show("Sample 2")
+        AddedSquareBoarder("DSC_0647.jpg",(self.backgroundColorRValue,self.backgroundColorGValue,self.backgroundColorBValue)).show("Sample 1")
+        AddedSquareBoarder("DSC_9871.jpg",(self.backgroundColorRValue, self.backgroundColorGValue, self.backgroundColorBValue)).show("Sample 2")
     def Start(self):
         for image in os.listdir(self.sourceDirectory):
             AddedSquareBoarder(str(Path(self.sourceDirectory)/Path(image)),(self.backgroundColorRValue, self.backgroundColorGValue, self.backgroundColorBValue)).save(str(Path(self.targetDirectory)/Path("framed"+image)))
