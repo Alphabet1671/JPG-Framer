@@ -1,0 +1,4 @@
+PyQt6~=6.5.1
+ExifRead~=3.0.0
+Pillow~=9.5.0
+setuptools~=65.5.1
