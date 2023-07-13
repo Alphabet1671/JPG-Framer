@@ -6,27 +6,39 @@ from pathlib import Path
 import exifread
 import os
 
-
 minBoarderWidth = 0.1
 minBoarderHeight = 0.2
 
 
-def AddedSquareBoarder(sourceLocation, backgroundColor, textColor, textSize, fontPath ,finalImageRatio, minBoarderWidth, minBoarderHeight, displayTopLeft, displayTopRight, displayBottomLeft, displayBottomRight):
+def AddedSquareBoarder(
+        sourceLocation,
+        backgroundColor,
+        textColor,
+        textSize,
+        fontPath,
+        finalImageRatio,
+        MinBoarderWidth,
+        MinBoarderHeight,
+        displayTopLeft,
+        displayTopRight,
+        displayBottomLeft,
+        displayBottomRight
+) -> Image.new:
+    print(sourceLocation)
     sourceImage = Image.open(sourceLocation)
     sourceWidth = sourceImage.size[0]
     sourceHeight = sourceImage.size[1]
-    if (sourceWidth/finalImageRatio)>sourceHeight:
-        resultWidth = int(sourceWidth*(1+minBoarderWidth))
-        resultHeight = int(resultWidth/finalImageRatio)
-        textHeight = int(resultWidth-sourceWidth)*(minBoarderHeight/minBoarderWidth)/2*textSize
+    if (sourceWidth / finalImageRatio) > sourceHeight:
+        resultWidth = int(sourceWidth * (1 + MinBoarderWidth))
+        resultHeight = int(resultWidth / finalImageRatio)
+        textHeight = int(resultWidth - sourceWidth) * (MinBoarderHeight / MinBoarderWidth) / 2 * textSize
     else:
-        resultHeight = int(sourceHeight*(1+minBoarderHeight))
-        resultWidth = int(resultHeight*finalImageRatio)
-        textHeight =  int(resultHeight-sourceHeight)/2*textSize
+        resultHeight = int(sourceHeight * (1 + MinBoarderHeight))
+        resultWidth = int(resultHeight * finalImageRatio)
+        textHeight = int(resultHeight - sourceHeight) / 2 * textSize
+
     resultImage = Image.new("RGB", (resultWidth, resultHeight), backgroundColor)
-    resultImage.paste(sourceImage, (int((resultWidth-sourceWidth)/2),int((resultHeight-sourceHeight)/2)))
-
-
+    resultImage.paste(sourceImage, (int((resultWidth - sourceWidth) / 2), int((resultHeight - sourceHeight) / 2)))
 
     draw = ImageDraw.Draw(resultImage)
 
@@ -45,71 +57,109 @@ def AddedSquareBoarder(sourceLocation, backgroundColor, textColor, textSize, fon
 
     lensNameString = str(tags["EXIF LensModel"])
     """
-    try:
-        shutterSpeedString = str(tags["EXIF ExposureTime"])+" sec"
-    except:
-        shutterSpeedString = ""
+    # tags 没有识别到数据，说明文件有损坏或者不属于相机生成照片
+    if not tags:
+        try:
+            shutterSpeedString = str(tags["EXIF ExposureTime"]) + " sec"
+        except KeyError:
+            shutterSpeedString = ""
 
-    try:
-        if "/" in str(tags["EXIF FNumber"]):
-            tempList = str(tags["EXIF FNumber"]).split("/")
-            apertureString = "f/"+str(round(float(tempList[0])/float(tempList[1]),1))
-        else:
-            apertureString = "f/" + str(tags["EXIF FNumber"])
-    except:
-        apertureString = ""
+        try:
+            if "/" in str(tags["EXIF FNumber"]):
+                tempList = str(tags["EXIF FNumber"]).split("/")
+                apertureString = "f/" + str(round(float(tempList[0]) / float(tempList[1]), 1))
+            else:
+                apertureString = "f/" + str(tags["EXIF FNumber"])
+        except KeyError:
+            apertureString = ""
 
-    try:
-        isoSpeedString = "ISO" + str(tags["EXIF ISOSpeedRatings"])
-    except:
-        isoSpeedString = ""
-    try:
-        exposureProgramString = str(tags["EXIF ExposureProgram"])+" Exposure"
-    except:
+        try:
+            isoSpeedString = "ISO" + str(tags["EXIF ISOSpeedRatings"])
+        except KeyError:
+            isoSpeedString = ""
+        try:
+            exposureProgramString = str(tags["EXIF ExposureProgram"]) + " Exposure"
+        except KeyError:
+            exposureProgramString = ""
+        try:
+            focalLengthString = str(tags["EXIF FocalLength"]) + "mm"
+        except KeyError:
+            focalLengthString = ""
+
+        try:
+            cameraNameString = str(tags["Image Model"])
+        except KeyError:
+            cameraNameString = ""
+        try:
+            lensNameString = str(tags["EXIF LensModel"])
+        except KeyError:
+            lensNameString = ""
+
+        cameraSettingString = shutterSpeedString + "   " + apertureString + "   " + isoSpeedString
+
+    else:
+        cameraSettingString = ""
         exposureProgramString = ""
-    try:
-        focalLengthString = str(tags["EXIF FocalLength"])+"mm"
-    except:
         focalLengthString = ""
+        cameraNameString = ""
+        lensNameString = ""
 
-    cameraNameString = str(tags["Image Model"])
-
-    lensNameString = str(tags["EXIF LensModel"])
-
-    cameraSettingString = shutterSpeedString+"   "+apertureString+"   "+isoSpeedString
-
-
-
-
-
-    paddingHeight = int(resultHeight-sourceHeight)/2
-    paddingWidth = int(resultWidth-sourceWidth)/2
-
-
+    paddingHeight = int(resultHeight - sourceHeight) / 2
+    paddingWidth = int(resultWidth - sourceWidth) / 2
 
     cameraSettingFont = ImageFont.truetype(fontPath, int(textHeight))
     cameraInfoFont = ImageFont.truetype(fontPath, int(textHeight))
 
+    topLeftTextOffset = (paddingWidth, paddingHeight / 2)
+    topRightTextOffset = (resultWidth - paddingWidth, paddingHeight / 2)
+    bottomLeftTextOffset = (paddingWidth, resultHeight - paddingHeight / 2)
+    bottomRightTextOffset = (resultWidth - paddingWidth, resultHeight - paddingHeight / 2)
 
-
-    topLeftTextOffset = (paddingWidth,paddingHeight/2)
-    topRightTextOffset = (resultWidth-paddingWidth,paddingHeight/2)
-    bottomLeftTextOffset = (paddingWidth,resultHeight-paddingHeight/2)
-    bottomRightTextOffset = (resultWidth-paddingWidth,resultHeight-paddingHeight/2)
-    if displayTopLeft: draw.text(topLeftTextOffset, cameraSettingString, font=cameraSettingFont, fill=textColor, anchor="lm")
-    if displayTopRight: draw.text(topRightTextOffset, exposureProgramString, font=cameraSettingFont, fill=textColor, anchor="rm")
-    if displayBottomLeft: draw.text(bottomLeftTextOffset, focalLengthString, font=cameraSettingFont, fill=textColor, anchor="lm")
-    if displayBottomRight: draw.multiline_text(bottomRightTextOffset, cameraNameString+"\n"+lensNameString, font=cameraInfoFont, fill=textColor,align="right", anchor="rm",spacing=int(textHeight*0.1))
+    if displayTopLeft:
+        draw.text(
+            topLeftTextOffset,
+            cameraSettingString,
+            font=cameraSettingFont,
+            fill=textColor,
+            anchor="lm"
+        )
+    if displayTopRight:
+        draw.text(
+            topRightTextOffset,
+            exposureProgramString,
+            font=cameraSettingFont,
+            fill=textColor,
+            anchor="rm"
+        )
+    if displayBottomLeft:
+        draw.text(
+            bottomLeftTextOffset,
+            focalLengthString,
+            font=cameraSettingFont,
+            fill=textColor,
+            anchor="lm"
+        )
+    if displayBottomRight:
+        draw.multiline_text(
+            bottomRightTextOffset,
+            cameraNameString + "\n" + lensNameString,
+            font=cameraInfoFont,
+            fill=textColor,
+            align="right",
+            anchor="rm",
+            spacing=int(textHeight * 0.1)
+        )
     return resultImage
-#AddedSquareBoarder("Test/DSC_0647.jpg",(255,255,255)).show()
-#AddedSquareBoarder("Test/DSC_9871.jpg",(255,255,255)).show()
-#test images
 
 
-#GUI Shell here
+# AddedSquareBoarder("Test/DSC_0647.jpg",(255,255,255)).show()
+# AddedSquareBoarder("Test/DSC_9871.jpg",(255,255,255)).show()
+# test images
+
+
 class MainWindow(QMainWindow):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent=None):
+        super().__init__(parent=parent)
 
         self.setWindowTitle("Widgets App")
         self.sourceDirectory = ""
@@ -135,40 +185,47 @@ class MainWindow(QMainWindow):
 
         self.fontFileDirectory = "calibri-italic.ttf"
 
+        self.SelectFileBrowseFile = None
+
         self.minBoarderWidth = 0.1
         self.minBoarderHeight = 0.2
 
-#Browse button for directory input
+        # Browse button for directory input
         inputLayout = QVBoxLayout()
-#============================================================================Directory Input
+        # ============================================================================Directory Input
         directoryInputLayout = QGridLayout()
 
         sourceDirectoryBrowseButton = QPushButton("Browse")
         sourceDirectoryBrowseButton.clicked.connect(self.GetSourceDirectory)
+
+        # 选择单个文件
+        SelectFileBrowseButton = QPushButton("Select A File")
+        SelectFileBrowseButton.clicked.connect(self.SelectFileBrowseEvent)
+
         targetDirectoryBrowseButton = QPushButton("Browse")
         targetDirectoryBrowseButton.clicked.connect(self.GetTargetDirectory)
-        self.sourceDirectoryLabel = QLabel("From: "+self.sourceDirectory)
-        self.targetDirectoryLabel = QLabel("To: "+self.targetDirectory)
+        self.sourceDirectoryLabel = QLabel("From: " + self.sourceDirectory)
+        self.targetDirectoryLabel = QLabel("To: " + self.targetDirectory)
 
-        directoryInputLayout.addWidget(self.sourceDirectoryLabel,0,0)
-        directoryInputLayout.addWidget(sourceDirectoryBrowseButton,0,1)
-        directoryInputLayout.addWidget(self.targetDirectoryLabel,1,0)
-        directoryInputLayout.addWidget(targetDirectoryBrowseButton,1,1)
-#===============================================================================Preview & Start Buttons
+        directoryInputLayout.addWidget(self.sourceDirectoryLabel, 0, 0)
+        directoryInputLayout.addWidget(sourceDirectoryBrowseButton, 0, 1)
+        directoryInputLayout.addWidget(SelectFileBrowseButton, 0, 2)
+        directoryInputLayout.addWidget(self.targetDirectoryLabel, 1, 0)
+        directoryInputLayout.addWidget(targetDirectoryBrowseButton, 1, 1)
+        # ===============================================================================Preview & Start Buttons
         previewButton = QPushButton("Preview")
         previewButton.clicked.connect(self.Preview)
         startButton = QPushButton("Convert")
         startButton.released.connect(self.Start)
 
-
-#=================================================== Toggle Display Elements
+        # =================================================== Toggle Display Elements
         toggleLayout = QGridLayout()
 
         toggleSettingsCheckBox = QCheckBox()
         toggleSettingsCheckBox.setCheckable(True)
         toggleSettingsCheckBox.setText("Show Camera Settings")
         toggleSettingsCheckBox.stateChanged.connect(self.SetDisplayTopLeft)
-        #remember to connect the checkboxes
+        # remember to connect the checkboxes
 
         toggleProgramCheckBox = QCheckBox()
         toggleProgramCheckBox.setCheckable(True)
@@ -180,18 +237,16 @@ class MainWindow(QMainWindow):
         toggleFocalLengthCheckBox.setText("Show Focal Length")
         toggleFocalLengthCheckBox.stateChanged.connect(self.SetDisplayBottomLeft)
 
-
         toggleCameraInfoCheckBox = QCheckBox()
         toggleCameraInfoCheckBox.setCheckable(True)
         toggleCameraInfoCheckBox.setText("Show Camera Info")
         toggleCameraInfoCheckBox.stateChanged.connect(self.SetDisplayBottomRight)
 
-
-        toggleLayout.addWidget(toggleSettingsCheckBox,0,0)
-        toggleLayout.addWidget(toggleProgramCheckBox,0,1)
-        toggleLayout.addWidget(toggleFocalLengthCheckBox,1,0)
-        toggleLayout.addWidget(toggleCameraInfoCheckBox,1,1)
-#==================================================================Set Background Color
+        toggleLayout.addWidget(toggleSettingsCheckBox, 0, 0)
+        toggleLayout.addWidget(toggleProgramCheckBox, 0, 1)
+        toggleLayout.addWidget(toggleFocalLengthCheckBox, 1, 0)
+        toggleLayout.addWidget(toggleCameraInfoCheckBox, 1, 1)
+        # ==================================================================Set Background Color
 
         backgroundColorInputLayout = QHBoxLayout()
         backgroundColorInputLayout.setAlignment(Qt.AlignmentFlag.AlignLeft)
@@ -224,7 +279,7 @@ class MainWindow(QMainWindow):
         backgroundColorInputLayout.addWidget(backgroundColorGInput)
         backgroundColorInputLayout.addWidget(QLabel("B:"))
         backgroundColorInputLayout.addWidget(backgroundColorBInput)
-#=================================================================
+        # =================================================================
         textColorInputLayout = QHBoxLayout()
         textColorInputLayout.setAlignment(Qt.AlignmentFlag.AlignLeft)
         textColorRInput = QDoubleSpinBox()
@@ -256,7 +311,7 @@ class MainWindow(QMainWindow):
         textColorInputLayout.addWidget(QLabel("B:"))
         textColorInputLayout.addWidget(textColorBInput)
 
-#==================================================================================Set Image Ratio
+        # ==================================================================================Set Image Ratio
 
         ratioInputLayout = QHBoxLayout()
         ratioInputLayout.setAlignment(Qt.AlignmentFlag.AlignLeft)
@@ -273,12 +328,11 @@ class MainWindow(QMainWindow):
         heightRatioInput.setValue(self.imageHeightRatioValue)
         heightRatioInput.valueChanged.connect(self.SetImageHeightRatioValue)
 
-
         ratioInputLayout.addWidget(QLabel("Set Final Image Ratio (Width:Height)"))
         ratioInputLayout.addWidget(widthRatioInput)
         ratioInputLayout.addWidget(QLabel(":"))
         ratioInputLayout.addWidget(heightRatioInput)
-#==========================================================================Text Size Input
+        # ==========================================================================Text Size Input
 
         textSizeInputLayout = QHBoxLayout()
         textSizeInputLayout.setAlignment(Qt.AlignmentFlag.AlignLeft)
@@ -294,7 +348,7 @@ class MainWindow(QMainWindow):
         textSizeInputLayout.addWidget(QLabel("Text Height (Relative):"))
         textSizeInputLayout.addWidget(textSizeInput)
 
-#=======================================================================font file browse
+        # =======================================================================font file browse
 
         fontDirectoryInputLayout = QHBoxLayout()
 
@@ -306,8 +360,7 @@ class MainWindow(QMainWindow):
         fontDirectoryInputLayout.addWidget(self.fontDirectoryLabel)
         fontDirectoryInputLayout.addWidget(fontDirectoryBrowseButton)
 
-
-#=======================================================================Image Boarder control
+        # =======================================================================Image Boarder control
 
         imageBoarderInputLayout = QHBoxLayout()
 
@@ -329,7 +382,7 @@ class MainWindow(QMainWindow):
         imageBoarderInputLayout.addWidget(imageBoarderWidthInput)
         imageBoarderInputLayout.addWidget(QLabel("Minimum Frame Height (Relative to Source):"))
         imageBoarderInputLayout.addWidget(imageBoarderHeightInput)
-#===============
+        # ===============
         previewLayout = QHBoxLayout()
         previewLayout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.previewImageLabel1 = QLabel()
@@ -339,8 +392,7 @@ class MainWindow(QMainWindow):
         previewLayout.addWidget(self.previewImageLabel1)
         previewLayout.addWidget(self.previewImageLabel2)
 
-
-#=======================================================================
+        # =======================================================================
         inputLayout.addLayout(directoryInputLayout)
         inputLayout.addLayout(ratioInputLayout)
         inputLayout.addLayout(imageBoarderInputLayout)
@@ -361,6 +413,18 @@ class MainWindow(QMainWindow):
         # to take up all the space in the window by default.
         self.setCentralWidget(widget)
 
+    def SelectFileBrowseEvent(self) -> None:
+        """
+        选择单个文件进行处理
+        :return: None
+        """
+        file, _ = QFileDialog.getOpenFileName(self, "Select A File")
+        if os.path.isfile(file) is True:
+            self.SelectFileBrowseFile = file
+            self.sourceDirectoryLabel.setText(file)
+        else:
+            ...
+
     def GetSourceDirectory(self):
         dir = QFileDialog.getExistingDirectory(self, "Select Source Directory")
         if dir:
@@ -379,52 +443,124 @@ class MainWindow(QMainWindow):
         fontFileDialog.setNameFilter("*.ttf")
         dir = fontFileDialog.getOpenFileName(self, "Select Custom Font File (ttf)")[0]
         try:
-            if dir.split(".")[1]=="ttf":
+            if dir.split(".")[1] == "ttf":
                 self.fontFileDirectory = str(Path(dir))
                 self.fontDirectoryLabel.setText(self.fontFileDirectory)
         except:
             self.fontFileDirectory = "calibri-italic.ttf"
 
+    def CallAddedSquareBoarder(self, ImagePath: str) -> Image.new:
+        """
+        CallAddedSquareBoarder(ImagePath: str)
+        调用类外函数实现图片处理
+        :param ImagePath: str
+        :return: bool
+        """
+        if os.path.isfile(ImagePath) is not True:
+            return False
+
+        result = AddedSquareBoarder(
+            sourceLocation=ImagePath,
+            backgroundColor=(
+                self.backgroundColorRValue, self.backgroundColorGValue, self.backgroundColorBValue
+            ),
+            textColor=(
+                self.textColorRValue, self.textColorGValue, self.textColorBValue
+            ),
+            textSize=self.textSize,
+            fontPath=self.fontFileDirectory,
+            finalImageRatio=(self.imageWidthRatioValue / self.imageHeightRatioValue),
+            MinBoarderWidth=self.minBoarderWidth,
+            MinBoarderHeight=self.minBoarderHeight,
+            displayTopLeft=self.displayTopLeft,
+            displayTopRight=self.displayTopRight,
+            displayBottomLeft=self.displayBottomLeft,
+            displayBottomRight=self.displayBottomRight
+        )
+
+        return result
+
     def Preview(self):
-        AddedSquareBoarder(str(Path(os.getcwd())/Path("DSC_0647.jpg")),(self.backgroundColorRValue, self.backgroundColorGValue, self.backgroundColorBValue), (self.textColorRValue, self.textColorGValue,self.textColorBValue), self.textSize, self.fontFileDirectory, (self.imageWidthRatioValue/self.imageHeightRatioValue), self.minBoarderWidth,self.minBoarderHeight, self.displayTopLeft,self.displayTopRight,self.displayBottomLeft,self.displayBottomRight).resize((int(350),int(350*self.imageHeightRatioValue/self.imageWidthRatioValue))).save("temp1.jpg")
-        AddedSquareBoarder(str(Path(os.getcwd())/Path("DSC_9871.jpg")),(self.backgroundColorRValue, self.backgroundColorGValue, self.backgroundColorBValue), (self.textColorRValue, self.textColorGValue,self.textColorBValue), self.textSize, self.fontFileDirectory, (self.imageWidthRatioValue/self.imageHeightRatioValue), self.minBoarderWidth,self.minBoarderHeight, self.displayTopLeft,self.displayTopRight,self.displayBottomLeft,self.displayBottomRight).resize((int(350),int(350*self.imageHeightRatioValue/self.imageWidthRatioValue))).save("temp2.jpg")
-        self.previewImageLabel1.setPixmap(QPixmap(str(Path(os.getcwd())/Path("temp1.jpg"))))
-        self.previewImageLabel2.setPixmap(QPixmap(str(Path(os.getcwd())/Path("temp2.jpg"))))
+        # 判断是否选择处理单个图片，否则只显示单否图片
+        if self.SelectFileBrowseFile is None:
+            self.CallAddedSquareBoarder(".\\DSC_0647.jpg").resize(
+                (int(350), int(350 * self.imageHeightRatioValue / self.imageWidthRatioValue))
+            ).save("temp1.jpg")
+            self.CallAddedSquareBoarder(".\\DSC_9871.jpg").resize(
+                (int(350), int(350 * self.imageHeightRatioValue / self.imageWidthRatioValue))
+            ).save("temp2.jpg")
+            self.previewImageLabel1.setPixmap(QPixmap(str(Path(os.getcwd()) / Path("temp1.jpg"))))
+            self.previewImageLabel2.setPixmap(QPixmap(str(Path(os.getcwd()) / Path("temp2.jpg"))))
+        else:
+            PreviewIamge = self.CallAddedSquareBoarder(self.SelectFileBrowseFile)
+
+            PreviewIamge.resize(
+                (350, int(350 * self.imageHeightRatioValue / self.imageWidthRatioValue))
+            ).save("temp1.jpg")
+
+            self.previewImageLabel1.setPixmap(QPixmap(os.path.join(os.getcwd(), "temp1.jpg")))
+
     def Start(self):
-        for image in os.listdir(self.sourceDirectory):
-            AddedSquareBoarder(str(Path(self.sourceDirectory)/Path(image)),(self.backgroundColorRValue, self.backgroundColorGValue, self.backgroundColorBValue), (self.textColorRValue, self.textColorGValue,self.textColorBValue),self.textSize, self.fontFileDirectory, (self.imageWidthRatioValue/self.imageHeightRatioValue), self.minBoarderWidth,self.minBoarderHeight, self.displayTopLeft,self.displayTopRight,self.displayBottomLeft,self.displayBottomRight).save(str(Path(self.targetDirectory)/Path("framed"+image)))
+        # 判断self.SelectFileBrowseFile是否存在数据
+        # self.sourceDirectory不存在数据时将启动单个任务
+        if len(self.sourceDirectory) == 0 and self.SelectFileBrowseFile is not None:
+            self.CallAddedSquareBoarder(self.SelectFileBrowseFile).save(
+                str(Path(self.targetDirectory) / Path("framed" + os.path.split(self.SelectFileBrowseFile)[-1]))
+            )
+
+        for paths, dirs, files in os.walk(self.sourceDirectory):
+            # str(Path(self.sourceDirectory)/Path(image))
+            for file in files:
+                imagePath = os.path.join(paths, file)
+                self.CallAddedSquareBoarder(imagePath).save(
+                    str(Path(self.targetDirectory) / Path("framed" + file))
+                )
 
     def SetDisplayTopLeft(self, checked):
         self.displayTopLeft = checked
+
     def SetDisplayTopRight(self, checked):
         self.displayTopRight = checked
+
     def SetDisplayBottomLeft(self, checked):
         self.displayBottomLeft = checked
+
     def SetDisplayBottomRight(self, checked):
         self.displayBottomRight = checked
+
     def SetBackgroundColorRValue(self, value):
+
         self.backgroundColorRValue = int(value)
+
     def SetBackgroundColorGValue(self, value):
         self.backgroundColorGValue = int(value)
+
     def SetBackgroundColorBValue(self, value):
         self.backgroundColorBValue = int(value)
+
     def SetTextColorRValue(self, value):
         self.textColorRValue = int(value)
+
     def SetTextColorGValue(self, value):
         self.textColorGValue = int(value)
+
     def SetTextColorBValue(self, value):
         self.textColorBValue = int(value)
+
     def SetImageWidthRatioValue(self, value):
         self.imageWidthRatioValue = value
+
     def SetImageHeightRatioValue(self, value):
         self.imageHeightRatioValue = value
+
     def SetTextSize(self, value):
         self.textSize = value
+
     def SetMinBoarderHeight(self, value):
         self.minBoarderHeight = value
+
     def SetMinBoarderWidth(self, value):
         self.minBoarderWidth = value
-
 
 
 app = QApplication([])
@@ -436,9 +572,6 @@ window.show()  # IMPORTANT!!!!! Windows are hidden by default.
 
 # Start the event loop.
 app.exec()
-
-
-
 
 """for image in os.listdir(sourceDirectory):
     AddedSquareBoarder(str(sourceDirectory)+"+str(image),(255,255,255)).save(str(targetDirectory)+"\\"+str(image)+"-framed.jpg","JPEG")"""
