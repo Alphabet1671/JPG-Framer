@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import *
 from PyQt6.QtGui import QPixmap
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QTranslator, QLocale
 from PIL import Image, ImageFont, ImageDraw
 from pathlib import Path
 import exifread
@@ -195,17 +195,17 @@ class MainWindow(QMainWindow):
         # ============================================================================Directory Input
         directoryInputLayout = QGridLayout()
 
-        sourceDirectoryBrowseButton = QPushButton("Browse")
+        sourceDirectoryBrowseButton = QPushButton(self.tr("Browse"))
         sourceDirectoryBrowseButton.clicked.connect(self.GetSourceDirectory)
 
         # 选择单个文件
-        SelectFileBrowseButton = QPushButton("Select A File")
+        SelectFileBrowseButton = QPushButton(self.tr("Select A File"))
         SelectFileBrowseButton.clicked.connect(self.SelectFileBrowseEvent)
 
-        targetDirectoryBrowseButton = QPushButton("Browse")
+        targetDirectoryBrowseButton = QPushButton(self.tr("Browse"))
         targetDirectoryBrowseButton.clicked.connect(self.GetTargetDirectory)
-        self.sourceDirectoryLabel = QLabel("From: " + self.sourceDirectory)
-        self.targetDirectoryLabel = QLabel("To: " + self.targetDirectory)
+        self.sourceDirectoryLabel = QLabel(self.tr("From: ") + self.sourceDirectory)
+        self.targetDirectoryLabel = QLabel(self.tr("To: ") + self.targetDirectory)
 
         directoryInputLayout.addWidget(self.sourceDirectoryLabel, 0, 0)
         directoryInputLayout.addWidget(sourceDirectoryBrowseButton, 0, 1)
@@ -213,9 +213,9 @@ class MainWindow(QMainWindow):
         directoryInputLayout.addWidget(self.targetDirectoryLabel, 1, 0)
         directoryInputLayout.addWidget(targetDirectoryBrowseButton, 1, 1)
         # ===============================================================================Preview & Start Buttons
-        previewButton = QPushButton("Preview")
+        previewButton = QPushButton(self.tr("Preview"))
         previewButton.clicked.connect(self.Preview)
-        startButton = QPushButton("Convert")
+        startButton = QPushButton(self.tr("Convert"))
         startButton.released.connect(self.Start)
 
         # =================================================== Toggle Display Elements
@@ -223,23 +223,23 @@ class MainWindow(QMainWindow):
 
         toggleSettingsCheckBox = QCheckBox()
         toggleSettingsCheckBox.setCheckable(True)
-        toggleSettingsCheckBox.setText("Show Camera Settings")
+        toggleSettingsCheckBox.setText(self.tr("Show Camera Settings"))
         toggleSettingsCheckBox.stateChanged.connect(self.SetDisplayTopLeft)
         # remember to connect the checkboxes
 
         toggleProgramCheckBox = QCheckBox()
         toggleProgramCheckBox.setCheckable(True)
-        toggleProgramCheckBox.setText("Show Exposure Program")
+        toggleProgramCheckBox.setText(self.tr("Show Exposure Program"))
         toggleProgramCheckBox.stateChanged.connect(self.SetDisplayTopRight)
 
         toggleFocalLengthCheckBox = QCheckBox()
         toggleFocalLengthCheckBox.setCheckable(True)
-        toggleFocalLengthCheckBox.setText("Show Focal Length")
+        toggleFocalLengthCheckBox.setText(self.tr("Show Focal Length"))
         toggleFocalLengthCheckBox.stateChanged.connect(self.SetDisplayBottomLeft)
 
         toggleCameraInfoCheckBox = QCheckBox()
         toggleCameraInfoCheckBox.setCheckable(True)
-        toggleCameraInfoCheckBox.setText("Show Camera Info")
+        toggleCameraInfoCheckBox.setText(self.tr("Show Camera Info"))
         toggleCameraInfoCheckBox.stateChanged.connect(self.SetDisplayBottomRight)
 
         toggleLayout.addWidget(toggleSettingsCheckBox, 0, 0)
@@ -272,12 +272,12 @@ class MainWindow(QMainWindow):
         backgroundColorBInput.setValue(self.backgroundColorBValue)
         backgroundColorBInput.valueChanged.connect(self.SetBackgroundColorBValue)
 
-        backgroundColorInputLayout.addWidget(QLabel("Background Color: "))
-        backgroundColorInputLayout.addWidget(QLabel("R:"))
+        backgroundColorInputLayout.addWidget(QLabel(self.tr("Background Color: ")))
+        backgroundColorInputLayout.addWidget(QLabel(self.tr("R:")))
         backgroundColorInputLayout.addWidget(backgroundColorRInput)
-        backgroundColorInputLayout.addWidget(QLabel("G:"))
+        backgroundColorInputLayout.addWidget(QLabel(self.tr("G:")))
         backgroundColorInputLayout.addWidget(backgroundColorGInput)
-        backgroundColorInputLayout.addWidget(QLabel("B:"))
+        backgroundColorInputLayout.addWidget(QLabel(self.tr("B:")))
         backgroundColorInputLayout.addWidget(backgroundColorBInput)
         # =================================================================
         textColorInputLayout = QHBoxLayout()
@@ -303,12 +303,12 @@ class MainWindow(QMainWindow):
         textColorBInput.setValue(self.textColorBValue)
         textColorBInput.valueChanged.connect(self.SetTextColorBValue)
 
-        textColorInputLayout.addWidget(QLabel("Text Color: "))
-        textColorInputLayout.addWidget(QLabel("R:"))
+        textColorInputLayout.addWidget(QLabel(self.tr("Text Color: ")))
+        textColorInputLayout.addWidget(QLabel(self.tr("R:")))
         textColorInputLayout.addWidget(textColorRInput)
-        textColorInputLayout.addWidget(QLabel("G:"))
+        textColorInputLayout.addWidget(QLabel(self.tr("G:")))
         textColorInputLayout.addWidget(textColorGInput)
-        textColorInputLayout.addWidget(QLabel("B:"))
+        textColorInputLayout.addWidget(QLabel(self.tr("B:")))
         textColorInputLayout.addWidget(textColorBInput)
 
         # ==================================================================================Set Image Ratio
@@ -328,7 +328,7 @@ class MainWindow(QMainWindow):
         heightRatioInput.setValue(self.imageHeightRatioValue)
         heightRatioInput.valueChanged.connect(self.SetImageHeightRatioValue)
 
-        ratioInputLayout.addWidget(QLabel("Set Final Image Ratio (Width:Height)"))
+        ratioInputLayout.addWidget(QLabel(self.tr("Set Final Image Ratio (Width:Height)")))
         ratioInputLayout.addWidget(widthRatioInput)
         ratioInputLayout.addWidget(QLabel(":"))
         ratioInputLayout.addWidget(heightRatioInput)
@@ -345,18 +345,18 @@ class MainWindow(QMainWindow):
         textSizeInput.setValue(self.textSize)
         textSizeInput.valueChanged.connect(self.SetTextSize)
 
-        textSizeInputLayout.addWidget(QLabel("Text Height (Relative):"))
+        textSizeInputLayout.addWidget(QLabel(self.tr("Text Height (Relative):")))
         textSizeInputLayout.addWidget(textSizeInput)
 
         # =======================================================================font file browse
 
         fontDirectoryInputLayout = QHBoxLayout()
 
-        fontDirectoryBrowseButton = QPushButton("Browse")
+        fontDirectoryBrowseButton = QPushButton(self.tr("Browse"))
         fontDirectoryBrowseButton.clicked.connect(self.GetFontDirectory)
         self.fontDirectoryLabel = QLabel()
 
-        fontDirectoryInputLayout.addWidget(QLabel("Font File:"))
+        fontDirectoryInputLayout.addWidget(QLabel(self.tr("Font File:")))
         fontDirectoryInputLayout.addWidget(self.fontDirectoryLabel)
         fontDirectoryInputLayout.addWidget(fontDirectoryBrowseButton)
 
@@ -378,9 +378,9 @@ class MainWindow(QMainWindow):
         imageBoarderWidthInput.setValue(self.minBoarderWidth)
         imageBoarderWidthInput.valueChanged.connect(self.SetMinBoarderWidth)
 
-        imageBoarderInputLayout.addWidget(QLabel("Minimum Frame Width (Relative to Source):"))
+        imageBoarderInputLayout.addWidget(QLabel(self.tr("Minimum Frame Width (Relative to Source):")))
         imageBoarderInputLayout.addWidget(imageBoarderWidthInput)
-        imageBoarderInputLayout.addWidget(QLabel("Minimum Frame Height (Relative to Source):"))
+        imageBoarderInputLayout.addWidget(QLabel(self.tr("Minimum Frame Height (Relative to Source):")))
         imageBoarderInputLayout.addWidget(imageBoarderHeightInput)
         # ===============
         previewLayout = QHBoxLayout()
@@ -396,7 +396,7 @@ class MainWindow(QMainWindow):
         inputLayout.addLayout(directoryInputLayout)
         inputLayout.addLayout(ratioInputLayout)
         inputLayout.addLayout(imageBoarderInputLayout)
-        inputLayout.addWidget(QLabel("Display Elements:"))
+        inputLayout.addWidget(QLabel(self.tr("Display Elements:")))
         inputLayout.addLayout(toggleLayout)
         inputLayout.addLayout(backgroundColorInputLayout)
         inputLayout.addLayout(textSizeInputLayout)
@@ -564,7 +564,14 @@ class MainWindow(QMainWindow):
 
 
 app = QApplication([])
-
+translator = QTranslator()
+# auto switch language
+user_language = QLocale.system().language()
+if user_language == QLocale.Language.Chinese:
+    translator.load("./translate/main_en.qm")
+else:
+    print("Unsupport Language, using default language: English")
+app.installTranslator(translator)
 # Create a Qt widget, which will be our window.
 window = MainWindow()
 window.setWindowTitle("Image Frame Generator")
